@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+    lista.forEach((m, index) => {
+      const tr = document.createElement('tr');
+
+      if (m.tipo === 'entrada') saldo += m.valor;
+      else saldo -= m.valor;
+
+      tr.innerHTML = `
+        <td>${m.data}</td>
+        <td class="${m.tipo}">${m.tipo}</td>
+        <td>${m.descricao}</td>
+        <td>R$ ${m.valor.toFixed(2)}</td>
+        <td><button onclick="remover(${index})">Excluir</button></td>
+      `;
+
+      tabela.appendChild(tr);
+    });
+
+    document.getElementById('saldo').innerText = saldo.toFixed(2);
+  }
+
+  function remover(index) {
+    if (confirm('Excluir lançamento?')) {
+      movimentos.splice(index, 1);
+      salvar();
+      atualizar();
+    }
+  }
+
+  function filtrar() {
+    const data = document.getElementById('data').value;
+    if (!data) return atualizar();
+
+    const filtrado = movimentos.filter(m => m.data === data);
+    atualizar(filtrado);
+  }
+
+  function exportarCSV() {
+    let csv = 'Data,Tipo,Descrição,Valor\n';
+
+    movimentos.forEach(m => {
+      csv += `${m.data},${m.tipo},${m.descricao},${m.valor}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'caixa.csv';
+    a.click();
+  }
+
+  function limpar() {
+    if (confirm('Apagar tudo?')) {
+      movimentos = [];
+      salvar();
+      atualizar();
+    }
+  }
+
+  atualizar();
+</script>
+
+</body>
+</html>
