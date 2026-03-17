@@ -1,66 +1,143 @@
 <!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Caixa Completo</title>
+  <style>
+    body { font-family: Arial; margin: 20px; background:#eef1f5; }
+    h1 { color:#222; }
+    input, button, select { padding:8px; margin:5px; border-radius:6px; border:1px solid #ccc; }
+    button { cursor:pointer; }
+    table { width:100%; border-collapse: collapse; margin-top:20px; background:#fff; }
+    th, td { border:1px solid #ddd; padding:10px; }
+    th { background:#333; color:#fff; }
+    .entrada { color:green; font-weight:bold; }
+    .saida { color:red; font-weight:bold; }
+    .saldo { font-size:22px; font-weight:bold; margin-top:10px; }
+  </style>
+</head>
+<body>
 
-    lista.forEach((m, index) => {
-      const tr = document.createElement('tr');
+<h1>💰 Sistema de Caixa</h1>
 
-      if (m.tipo === 'entrada') saldo += m.valor;
-      else saldo -= m.valor;
+<select id="tipo">
+  <option value="entrada">Entrada</option>
+  <option value="saida">Saída</option>
+</select>
 
-      tr.innerHTML = `
-        <td>${m.data}</td>
-        <td class="${m.tipo}">${m.tipo}</td>
-        <td>${m.descricao}</td>
-        <td>R$ ${m.valor.toFixed(2)}</td>
-        <td><button onclick="remover(${index})">Excluir</button></td>
-      `;
+<input type="text" id="descricao" placeholder="Descrição">
+<input type="number" id="valor" placeholder="Valor">
+<input type="date" id="data">
 
-      tabela.appendChild(tr);
-    });
+<button onclick="adicionar()">Adicionar</button>
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="exportarCSV()">Exportar</button>
+<button onclick="limpar()">Limpar</button>
 
-    document.getElementById('saldo').innerText = saldo.toFixed(2);
+<h2 class="saldo">Saldo: R$ <span id="saldo">0.00</span></h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Tipo</th>
+      <th>Descrição</th>
+      <th>Valor</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody id="tabela"></tbody>
+</table>
+
+<script>
+let movimentos = JSON.parse(localStorage.getItem('caixa')) || [];
+
+function salvar() {
+  localStorage.setItem('caixa', JSON.stringify(movimentos));
+}
+
+function adicionar() {
+  const tipo = document.getElementById('tipo').value;
+  const descricao = document.getElementById('descricao').value;
+  const valor = parseFloat(document.getElementById('valor').value);
+  const data = document.getElementById('data').value;
+
+  if (!descricao || !valor || !data) {
+    alert('Preencha todos os campos!');
+    return;
   }
 
-  function remover(index) {
-    if (confirm('Excluir lançamento?')) {
-      movimentos.splice(index, 1);
-      salvar();
-      atualizar();
-    }
-  }
-
-  function filtrar() {
-    const data = document.getElementById('data').value;
-    if (!data) return atualizar();
-
-    const filtrado = movimentos.filter(m => m.data === data);
-    atualizar(filtrado);
-  }
-
-  function exportarCSV() {
-    let csv = 'Data,Tipo,Descrição,Valor\n';
-
-    movimentos.forEach(m => {
-      csv += `${m.data},${m.tipo},${m.descricao},${m.valor}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'caixa.csv';
-    a.click();
-  }
-
-  function limpar() {
-    if (confirm('Apagar tudo?')) {
-      movimentos = [];
-      salvar();
-      atualizar();
-    }
-  }
-
+  movimentos.push({ tipo, descricao, valor, data });
+  salvar();
   atualizar();
+
+  document.getElementById('descricao').value = '';
+  document.getElementById('valor').value = '';
+}
+
+function atualizar(lista = movimentos) {
+  const tabela = document.getElementById('tabela');
+  tabela.innerHTML = '';
+  let saldo = 0;
+
+  lista.forEach((m, index) => {
+    const tr = document.createElement('tr');
+
+    if (m.tipo === 'entrada') saldo += m.valor;
+    else saldo -= m.valor;
+
+    tr.innerHTML = `
+      <td>${m.data}</td>
+      <td class="${m.tipo}">${m.tipo}</td>
+      <td>${m.descricao}</td>
+      <td>R$ ${m.valor.toFixed(2)}</td>
+      <td><button onclick="remover(${index})">Excluir</button></td>
+    `;
+
+    tabela.appendChild(tr);
+  });
+
+  document.getElementById('saldo').innerText = saldo.toFixed(2);
+}
+
+function remover(index) {
+  if (confirm('Excluir lançamento?')) {
+    movimentos.splice(index, 1);
+    salvar();
+    atualizar();
+  }
+}
+
+function filtrar() {
+  const data = document.getElementById('data').value;
+  if (!data) return atualizar();
+  const filtrado = movimentos.filter(m => m.data === data);
+  atualizar(filtrado);
+}
+
+function exportarCSV() {
+  let csv = 'Data,Tipo,Descrição,Valor\n';
+  movimentos.forEach(m => {
+    csv += `${m.data},${m.tipo},${m.descricao},${m.valor}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'caixa.csv';
+  a.click();
+}
+
+function limpar() {
+  if (confirm('Apagar tudo?')) {
+    movimentos = [];
+    salvar();
+    atualizar();
+  }
+}
+
+atualizar();
 </script>
 
 </body>
